@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Mersenne Prime Wasm Engine</title>
+    <style>
+        body { background: #0f172a; color: #f8fafc; font-family: monospace; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: #1e293b; border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; }
+        button { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #64748b; cursor: not-allowed; }
+        .log-box { background: #090d16; height: 200px; overflow-y: auto; padding: 10px; border-radius: 4px; color: #38bdf8; font-size: 13px; }
+        .prime-item { background: #15803d; color: white; padding: 8px 12px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .copy-btn { background: #22c55e; padding: 4px 8px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Mersenne Prime Wasm Search Engine</h1>
+        
+        <div class="card">
+            <h3>대시보드 컨트롤</h3>
+            <label>탐색 범위 (P): </label>
+            <input type="number" id="startP" value="2" style="width: 70px;"> ~ 
+            <input type="number" id="endP" value="500" style="width: 70px;">
+            <button id="startBtn" disabled>Wasm 로딩 중...</button>
+        </div>
+
+        <div class="card">
+            <h3>🎉 발견된 메르센 소수 (2^P - 1)</h3>
+            <div id="primeList">아직 발견된 소수가 없습니다.</div>
+        </div>
+
+        <div class="card">
+            <h3>실시간 탐색 로그</h3>
+            <div id="logBox" class="log-box"></div>
+        </div>
+    </div>
+
+    <script>
+        const worker = new Worker('worker.js');
+        const startBtn = document.getElementById('startBtn');
+        const logBox = document.getElementById('logBox');
+        const primeList = document.getElementById('primeList');
+
+        // Worker 준비 상태 확인
+        worker.onmessage = (e) => {
+            const data = e.data;
+
+            if (data.type === 'READY') {
+                startBtn.disabled = false;
+                startBtn.innerText = '탐색 시작';
+                appendLog('System', 'C++ Wasm 엔진 연동 완료!');
+            } else if (data.type === 'FOUND') {
+                appendLog('FOUND', `메르센 소수 발견! M_${data.p} = 2^${data.p} - 1`);
+                addPrimeResult(data.p);
+            } else if (data.type === 'PROGRESS') {
+                if (data.p % 10 === 0) { // 로그 폭주 방지용 샘플링
+                    appendLog('SEARCH', `지수 P = ${data.p} 검사 중...`);
+                }
+            } else if (data.type === 'DONE') {
+                startBtn.disabled = false;
+                appendLog('System', '지정 범위 탐색 완료.');
+            }
+        };
+
+        startBtn.onclick = () => {
+            const startP = parseInt(document.getElementById('startP').value);
+            const endP = parseInt(document.getElementById('endP').value);
+            
+            startBtn.disabled = true;
+            appendLog('System', `P = ${startP} ~ ${endP} 연산 시작...`);
+            worker.postMessage({ action: 'START', startP, endP });
+        };
+
+        function appendLog(tag, msg) {
+            const div = document.createElement('div');
+            div.innerText = `[${tag}] ${msg}`;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function addPrimeResult(p) {
+            if (primeList.innerText.includes('아직')) primeList.innerHTML = '';
+            
+            const item = document.createElement('div');
+            item.className = 'prime-item';
+            const text = `2^${p} - 1`;
+            
+            item.innerHTML = `
+                <span><strong>M_${p}</strong> (${text})</span>
+                <button class="copy-btn" onclick="copyToClipboard('${text}')">복사</button>
+            `;
+            primeList.appendChild(item);
+        }
+
+        function copyToClipboard(val) {
+            navigator.clipboard.writeText(val);
+            alert(`클립보드에 복사되었습니다: ${val}`);
+        }
+    </script>
+</body>
+</html>
