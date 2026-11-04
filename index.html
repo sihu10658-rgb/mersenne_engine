@@ -7,6 +7,8 @@
         body { background: #0f172a; color: #f8fafc; font-family: monospace; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; }
         .card { background: #1e293b; border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; }
+        label { margin-right: 5px; font-weight: bold; }
+        input { background: #090d16; color: #f8fafc; border: 1px solid #475569; padding: 5px; border-radius: 4px; }
         button { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         button:disabled { background: #64748b; cursor: not-allowed; }
         .log-box { background: #090d16; height: 200px; overflow-y: auto; padding: 10px; border-radius: 4px; color: #38bdf8; font-size: 13px; }
@@ -20,9 +22,14 @@
         
         <div class="card">
             <h3>대시보드 컨트롤</h3>
-            <label>탐색 범위 (P): </label>
-            <input type="number" id="startP" value="2" style="width: 70px;"> ~ 
-            <input type="number" id="endP" value="500" style="width: 70px;">
+            <div style="margin-bottom: 10px;">
+                <label for="startP">탐색 시작 지수 (P):</label>
+                <input type="number" id="startP" value="2" style="width: 70px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="endP">탐색 종료 지수 (P):</label>
+                <input type="number" id="endP" value="500" style="width: 70px;">
+            </div>
             <button id="startBtn" disabled>Wasm 로딩 중...</button>
         </div>
 
