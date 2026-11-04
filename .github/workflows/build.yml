@@ -1,0 +1,52 @@
+name: Build Mersenne Engine (Multi-Platform)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    # 1. 리눅스 (GCC 최적화 빌드)
+    - name: Compile on Linux (GCC)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        g++ -O3 -march=x86-64-v3 -flto -funroll-loops -fomit-frame-pointer -fno-stack-protector -std=c++23 -pthread mersenne_engine.cpp -o mersenne_engine
+
+    # 2. 맥OS (Apple Silicon / Intel - Clang 최적화 빌드)
+    - name: Compile on macOS (Clang)
+      if: matrix.os == 'macos-latest'
+      run: |
+        clang++ -O3 -std=c++23 -pthread mersenne_engine.cpp -o mersenne_engine
+
+    # 3. 윈도우 (MSVC 최적화 빌드)
+    - name: Compile on Windows (MSVC)
+      if: matrix.os == 'windows-latest'
+      run: |
+        cl /std:c++latest /O2 /EHsc /fp:fast mersenne_engine.cpp /Fe:mersenne_engine.exe
+
+    # 4. 스모크 테스트 (실행 확인 - Linux / macOS)
+    - name: Smoke Test (Unix)
+      if: matrix.os != 'windows-latest'
+      run: |
+        timeout 3s ./mersenne_engine || true
+
+    # 5. 스모크 테스트 (실행 확인 - Windows)
+    - name: Smoke Test (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        $process = Start-Process -FilePath './mersenne_engine.exe' -PassThru
+        Start-Sleep -Seconds 3
+        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
