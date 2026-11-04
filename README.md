@@ -23,5 +23,3 @@ A high-performance, multi-threaded Mersenne Prime search engine written in moder
 
 Compile with extreme performance flags (GCC / Clang):
 
-```bash
-g++ -O3 -march=native -mtune=native -flto -funroll-loops -fomit-frame-pointer -fno-stack-protector -std=c++23 -pthread mersenne_engine.cpp -o mersenne_engine
